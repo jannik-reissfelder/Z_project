@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import numpy as np
 from tenacity import retry, wait_random_exponential, stop_after_attempt
+import streamlit as st
 
 # Function to retrieve OpenAI API key from AWS Secrets Manager
 def get_secret():
@@ -97,3 +98,54 @@ def get_remedies(symptom_id, db_path='synthesis.db'):
     
     # Format the results
     return [{'abbreviation': r[0], 'description': r[1], 'degree': r[2]} for r in remedies]
+
+# helpers.py
+
+def partial_reset_session_state():
+    """
+    Resets the session state variables to start a new symptom search,
+    while preserving 'final_results' and 'conversation'.
+    """
+    # Variables to preserve
+    variables_to_keep = ['final_results', 'conversation']
+
+    # Get all keys in session state
+    keys = list(st.session_state.keys())
+
+    # Delete all keys except those to keep
+    for key in keys:
+        if key not in variables_to_keep:
+            del st.session_state[key]
+
+    # Set 'current_step' to 'input_symptom_class'
+    st.session_state.current_step = 'input_symptom_class'
+
+    # Rerun the app
+    st.rerun()
+
+
+
+def add_to_final_results(remedies, symptom_id):
+    """
+    Adds remedies to the final_results session state and sets a success message.
+
+    Parameters:
+    - remedies (list of dict): List of remedies to add.
+    - symptom_id (int): The ID of the symptom for reference in the success message.
+    """
+    # Extend the final_results list with new remedies
+    st.session_state.final_results.extend(remedies)
+
+    # Set a success message with the symptom ID
+    st.session_state.added_message = f"Remedies for Symptom ID {symptom_id} wurden zu den finalen Ergebnissen hinzugefügt."
+
+
+
+
+def full_reset_session_state():
+    """
+    Resets the entire session state, effectively restarting the app.
+    """
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()

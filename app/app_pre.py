@@ -4,7 +4,7 @@ import streamlit as st
 import time
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 from openai_utils import process_symptom_class, enrich_query
-from ui import get_input_symptom_class, display_symptom_class_results, display_remedies
+from ui import get_input_symptom_class, display_symptom_class_results, display_remedies, display_final_analysis
 import pandas as pd
 from helpers import (
     initialize_openai,
@@ -55,9 +55,11 @@ def initialize_session():
     # Initialize top_results in session state if it doesn't exist
     if "top_results" not in st.session_state:
         st.session_state.top_results = pd.DataFrame()  # Empty DataFrame structure
+    if 'final_results' not in st.session_state:
+        st.session_state.final_results = []  # Initialize as an empty list to store remedies
 
 initialize_session()
-# st.write("After click Current session state:", st.session_state)
+st.write("After click Current session state:", st.session_state)
 
 
 # Define the new processing function within app.py
@@ -229,6 +231,8 @@ def run_app():
         perform_similarity_search()
     elif st.session_state.current_step == 'mittelsuche':
         display_remedies()
+    elif st.session_state.current_step == 'final_analysis':
+        display_final_analysis()
 
 
 # Run the app
