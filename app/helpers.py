@@ -46,28 +46,24 @@ def get_embeddings(texts, model="text-embedding-3-small"):
     return [item.embedding for item in response.data]
 
 # Function to search for top similar symptoms
-def search_top_similar_symptoms(user_query, data, top_n=10):
+def search_top_similar_symptoms(user_query, data, llm_oberkategorie, llm_unterkategorie, top_n=10):
+    # first filter database on llm_oberkategorie or llm_unterkategorie
+    if llm_oberkategorie == 'Körper':
+        data = data[data['category'] == llm_unterkategorie]
+    else:
+        data = data[data['category'] == llm_oberkategorie]
+    # after filtering get embeddings of user query
     user_embedding = get_embeddings([user_query])[0]
-    embeddings_matrix = np.vstack(data['embeddings'].values)
+    # stack all embeddings of symptoms
+    embeddings_matrix = np.vstack(data['relevant_symptom_embeddings'].values)
+    # calculate cosine similarities
     cosine_similarities = np.dot(embeddings_matrix, user_embedding)
+    # get top n similar symptoms
     top_indices = cosine_similarities.argsort()[::-1][:top_n]
     top_scores = cosine_similarities[top_indices]
     top_symptoms = data.iloc[top_indices].copy()
     top_symptoms['similarity'] = top_scores
     return top_symptoms
-
-# Function to enrich query using LLM
-def enrich_query(opai_client, conversation):
-    response = opai_client.chat.completions.create(
-        model="gpt-4o",
-        messages=conversation,
-        max_tokens=30,
-        temperature=0.1
-    )
-    
-    enriched_query = response.choices[0].message.content.strip()
-    return enriched_query
-
 
 
 def get_remedies(symptom_id, db_path='synthesis.db'):
@@ -87,7 +83,7 @@ def get_remedies(symptom_id, db_path='synthesis.db'):
     
     # Query to get remedies associated with the symptom_id
     query = """
-    SELECT remedies.remedy_abbreviation, remedies.description
+    SELECT remedies.remedy_abbreviation, remedies.description, symptom_remedies.degree
     FROM symptom_remedies
     JOIN remedies ON symptom_remedies.remedy_abbreviation = remedies.remedy_abbreviation
     WHERE symptom_remedies.symptom_id = ?;
@@ -100,4 +96,4 @@ def get_remedies(symptom_id, db_path='synthesis.db'):
     conn.close()
     
     # Format the results
-    return [{'abbreviation': r[0], 'description': r[1]} for r in remedies]
+    return [{'abbreviation': r[0], 'description': r[1], 'degree': r[2]} for r in remedies]
