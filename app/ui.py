@@ -1,6 +1,6 @@
 import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-from helpers import get_remedies, partial_reset_session_state, full_reset_session_state, add_to_final_results
+from helpers import get_remedies, partial_reset_session_state, full_reset_session_state, add_to_final_results, remove_from_final_results
 import pandas as pd
 
 def get_input_symptom_class():
@@ -19,30 +19,52 @@ def get_input_symptom_class():
             st.warning("Bitte geben Sie die Symptomklasse des Patienten ein.")
 
 
+import streamlit as st
+
 
 def display_symptom_class_results():
     """
     Displays the results from the symptom class processing and provides a button to proceed.
     """
-    st.header("Ergebnisse der Symptomklassenanalyse")
+    # Custom smaller header using HTML
+    st.markdown(
+        "<h3 style='text-align: left; color: #333333;'>Ergebnisse der Symptomklassenanalyse</h3>",
+        unsafe_allow_html=True
+    )
 
-    # Retrieve the outputs from session state
+    # Add horizontal separator below header
+    st.markdown("---")
+
+    # Retrieve outputs from session state
     oberkategorie = st.session_state.get('oberkategorie', 'Nicht verfügbar')
     unterkategorie = st.session_state.get('unterkategorie', 'Nicht verfügbar')
     begründung = st.session_state.get('begründung', 'Nicht verfügbar')
+    user_input = st.session_state.get('user_input_symptom_class', 'Nicht verfügbar')
 
-    # Display the results
-    st.subheader("Eingabe-Symptom")
-    st.write(st.session_state.user_input_symptom_class)
+    # Use columns with vertical dividers and aligned content
+    col1, col2, col3 = st.columns([1, 0.5, 0.5])  # Adjust column widths as necessary
 
-    st.subheader("Oberkategorie")
-    st.write(oberkategorie)
+    with col1:
+        st.markdown("**Eingabe-Symptom**")
+        st.write(user_input)
 
-    st.subheader("Unterkategorie")
-    st.write(unterkategorie)
+    with col2:
+        st.markdown("**Oberkategorie**")
+        st.write(oberkategorie)
 
-    st.subheader("Begründung")
+    with col3:
+        st.markdown("**Unterkategorie**")
+        st.write(unterkategorie)
+
+    # Add horizontal separator
+    st.markdown("---")
+
+    # Display Begründung in its own section with bold heading
+    st.markdown("**Begründung**")
     st.write(begründung)
+
+    # Add another separator
+    st.markdown("---")
 
     # Button to proceed to the next step
     if st.button("Weiter mit Symptom-Suche"):
@@ -52,9 +74,10 @@ def display_symptom_class_results():
 
 def display_remedies():
     """
-    Displays selected symptoms and provides options to fetch remedies, add to results, or proceed to final analysis.
+    Displays selected symptoms and their remedies, and allows the user to include/exclude remedies
+    in the final results using a checkbox.
     """
-    st.write("**Selected Symptoms:**")
+    st.write("**Ausgewählte Symptome:**")
 
     # Retrieve selected rows
     selected_rows = st.session_state.selected_rows
@@ -64,49 +87,72 @@ def display_remedies():
             symptom_id = row['id']
             symptom_text = row['Relevantes Symptom']
 
-            # Initialize session state flags for each symptom
-            show_remedies_key = f'show_remedies_{symptom_id}'
+            # Unique keys for session state
             remedies_key = f'remedies_{symptom_id}'
+            include_key = f'include_remedies_{symptom_id}'
+            expanded_key = f'expanded_{symptom_id}'
+            include_prev_key = f'include_remedies_{symptom_id}_prev'
 
-            if show_remedies_key not in st.session_state:
-                st.session_state[show_remedies_key] = False
+            # Initialize expanded state
+            if expanded_key not in st.session_state:
+                st.session_state[expanded_key] = False  # Default is collapsed
 
-            # Create an expander for each symptom
-            with st.expander(f"Symptom ID: {symptom_id} - {symptom_text}", expanded=False):
-                # "Show Remedies" button
-                if st.button(f"Show Remedies for Symptom ID {symptom_id}", key=f"remedy_{symptom_id}"):
-                    # Fetch remedies for the current symptom_id
-                    remedies = get_remedies(symptom_id)
-                    # Store remedies and set flag to True
-                    st.session_state[remedies_key] = remedies
-                    st.session_state[show_remedies_key] = True
+            # Fetch remedies and store in session state if not already fetched
+            if remedies_key not in st.session_state:
+                remedies = get_remedies(symptom_id)
+                st.session_state[remedies_key] = remedies
+            else:
+                remedies = st.session_state[remedies_key]
 
-                # Check if remedies have been shown for this symptom
-                if st.session_state[show_remedies_key]:
-                    remedies = st.session_state.get(remedies_key, [])
-                    if remedies:
-                        st.write("**Remedies:**")
-                        # Display remedies as a sorted table
-                        remedies_df = pd.DataFrame(remedies)
-                        remedies_df.rename(columns={
-                            'abbreviation': 'Kürzel',
-                            'description': 'Mittel',
-                            'degree': 'Wertigkeit'
-                        }, inplace=True)
-                        # Sort by degree descending
-                        remedies_df = remedies_df.sort_values(by='Wertigkeit', ascending=False)
-                        st.table(remedies_df)
+            # Initialize inclusion flag in session state
+            if include_key not in st.session_state:
+                st.session_state[include_key] = False  # Default is not included
 
-                        # "Add Remedies" button
-                        if st.button(f"Add Remedies for Symptom ID {symptom_id} to Results", key=f"add_{symptom_id}"):
-                            add_to_final_results(remedies, symptom_id)  # Call the helper function
-                    else:
-                        st.write("No remedies found for this symptom.")
+            # Initialize previous include value
+            if include_prev_key not in st.session_state:
+                st.session_state[include_prev_key] = False
+
+            # Set the expanded parameter based on session state
+            with st.expander(f"Symptom ID: {symptom_id} - {symptom_text}", expanded=st.session_state[expanded_key]):
+                if remedies:
+                    # Display remedies as a sorted table
+                    remedies_df = pd.DataFrame(remedies)
+                    remedies_df.rename(columns={
+                        'abbreviation': 'Kürzel',
+                        'description': 'Mittel',
+                        'degree': 'Wertigkeit'
+                    }, inplace=True)
+                    remedies_df = remedies_df.sort_values(by='Wertigkeit', ascending=False)
+                    st.table(remedies_df)
+
+                    # Checkbox to include/exclude remedies in final results
+                    include = st.checkbox(
+                        "Mittel zu den finalen Ergebnissen hinzufügen",
+                        key=include_key  # Use include_key without loop index
+                    )
+
+                    # Handle inclusion/exclusion
+                    if include != st.session_state[include_prev_key]:
+                        # Inclusion state has changed
+                        if include:
+                            # Checkbox is checked, add remedies
+                            add_to_final_results(remedies, symptom_id)
+                            st.session_state[expanded_key] = True
+                        else:
+                            # Checkbox is unchecked, remove remedies
+                            remove_from_final_results(symptom_id)
+                            st.session_state[expanded_key] = True
+
+                        # Update previous include value
+                        st.session_state[include_prev_key] = include
+
+                else:
+                    st.write("Keine Mittel für dieses Symptom gefunden.")
 
         # Separator
         st.markdown("---")
 
-        # Button to return to initial state
+        # Button to return to symptom search (partial reset)
         if st.button("Zurück zur Symptom Suche"):
             partial_reset_session_state()
 
@@ -115,12 +161,9 @@ def display_remedies():
             st.session_state.current_step = 'final_analysis'
             st.rerun()
     else:
-        st.write("No symptoms selected.")
+        st.write("Keine Symptome ausgewählt.")
 
-    # Display success message if remedies were added
-    if st.session_state.get('added_message'):
-        st.success(st.session_state['added_message'])
-        del st.session_state['added_message']  # Clear the message after displaying
+
 
 
 

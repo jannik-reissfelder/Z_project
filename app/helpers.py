@@ -76,12 +76,12 @@ def get_remedies(symptom_id, db_path='synthesis.db'):
     - db_path (str): Path to the SQLite database file.
 
     Returns:
-    - List of remedies with their abbreviations and descriptions.
+    - List of dictionaries containing remedy information and the associated symptom_id.
     """
     # Connect to the SQLite database
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
+
     # Query to get remedies associated with the symptom_id
     query = """
     SELECT remedies.remedy_abbreviation, remedies.description, symptom_remedies.degree
@@ -89,15 +89,15 @@ def get_remedies(symptom_id, db_path='synthesis.db'):
     JOIN remedies ON symptom_remedies.remedy_abbreviation = remedies.remedy_abbreviation
     WHERE symptom_remedies.symptom_id = ?;
     """
-    
+
     cursor.execute(query, (symptom_id,))
     remedies = cursor.fetchall()
-    
+
     # Close the connection
     conn.close()
-    
+
     # Format the results
-    return [{'abbreviation': r[0], 'description': r[1], 'degree': r[2]} for r in remedies]
+    return [{'abbreviation': r[0], 'description': r[1], 'degree': r[2], 'symptom_id': symptom_id} for r in remedies]
 
 # helpers.py
 
@@ -127,18 +127,27 @@ def partial_reset_session_state():
 
 def add_to_final_results(remedies, symptom_id):
     """
-    Adds remedies to the final_results session state and sets a success message.
-
+    Adds remedies to the final_results session state, tagging them with symptom_id.
     Parameters:
     - remedies (list of dict): List of remedies to add.
-    - symptom_id (int): The ID of the symptom for reference in the success message.
+    - symptom_id (int): The ID of the symptom the remedies are associated with.
     """
-    # Extend the final_results list with new remedies
-    st.session_state.final_results.extend(remedies)
+    # Tag each remedy with the symptom_id
+    for remedy in remedies:
+        remedy_copy = remedy.copy()
+        remedy_copy['symptom_id'] = symptom_id
+        st.session_state.final_results.append(remedy_copy)
 
-    # Set a success message with the symptom ID
-    st.session_state.added_message = f"Remedies for Symptom ID {symptom_id} wurden zu den finalen Ergebnissen hinzugefügt."
-
+def remove_from_final_results(symptom_id):
+    """
+    Removes remedies associated with a specific symptom_id from the final_results session state.
+    Parameters:
+    - symptom_id (int): The ID of the symptom whose remedies should be removed.
+    """
+    st.session_state.final_results = [
+        remedy for remedy in st.session_state.final_results
+        if remedy.get('symptom_id') != symptom_id
+    ]
 
 
 

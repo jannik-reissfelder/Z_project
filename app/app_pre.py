@@ -42,8 +42,6 @@ def initialize_session():
         st.session_state.current_step = 'input_symptom_class'
     if 'enriched_query' not in st.session_state:
         st.session_state.enriched_query = None
-    if 'symptom_class_response' not in st.session_state:
-        st.session_state.symptom_class_response = None
     if 'user_input_symptom_class' not in st.session_state:
         st.session_state.user_input_symptom_class = ''
     if 'oberkategorie' not in st.session_state:
@@ -59,7 +57,7 @@ def initialize_session():
         st.session_state.final_results = []  # Initialize as an empty list to store remedies
 
 initialize_session()
-st.write("After click Current session state:", st.session_state)
+# st.write("After click Current session state:", st.session_state)
 
 
 # Define the new processing function within app.py
@@ -113,8 +111,12 @@ def generate_enriched_query():
     st.rerun()
 
 def adjust_enriched_query():
-    st.write("**Enriched Query Vorschlag:**")
-    st.write(st.session_state.enriched_query)
+    st.write("**Suchpfad-Vorschlag :**")
+    # Add another separator
+    st.markdown("---")
+    st.markdown(f"***{st.session_state.enriched_query}***")
+    # Add another separator
+    st.markdown("---")
 
     # Option to adjust or finalize the enriched query
     adjust = st.radio(
