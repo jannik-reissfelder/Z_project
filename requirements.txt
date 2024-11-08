@@ -1,0 +1,8 @@
+boto3
+numpy
+openai
+pandas
+streamlit
+streamlit-aggrid
+tenacity
+tqdm
