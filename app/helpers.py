@@ -35,7 +35,8 @@ def get_secret():
 
 # Initialize OpenAI client
 def initialize_openai():
-    os.environ["OPENAI_API_KEY"] = get_secret()
+    # os.environ["OPENAI_API_KEY"] = get_secret()
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_KEY"]
     # Return the OpenAI client instance if necessary
     client = OpenAI()
     return client

@@ -6,3 +6,4 @@ streamlit
 streamlit-aggrid
 tenacity
 tqdm
+streamlit-authenticator
