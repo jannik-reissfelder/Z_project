@@ -5,5 +5,7 @@ pandas
 streamlit
 streamlit-aggrid
 tenacity
+awswrangler
+boto3
 tqdm
 streamlit-authenticator
