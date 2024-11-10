@@ -1,7 +1,9 @@
 # app.py
 
 import streamlit as st
+import awswrangler as wr
 import time
+import boto3
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 from openai_utils import process_symptom_class, enrich_query
 from ui import get_input_symptom_class, display_symptom_class_results, display_remedies, display_final_analysis
@@ -11,15 +13,39 @@ from helpers import (
     search_top_similar_symptoms,
 )
 
+
+# Initialize a session using Streamlit secrets
+session = boto3.Session(
+    aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"],
+    region_name=st.secrets["AWS_DEFAULT_REGION"]
+)
+
+# Create an S3 client
+s3 = session.client('s3')
+
 # Initialize OpenAI client
 client = initialize_openai()
 
 # Load data
 @st.cache_data
 def load_data():
-    return pd.read_parquet("relevant_symptoms.gz")
+    symptom_data = wr.s3.read_parquet("s3://project-z-mambo/symptoms/relevant_symptoms.gz")
+    return symptom_data
+
+@st.cache_data
+def download_s3_file(bucket_name, s3_key, local_filename):
+    s3 = boto3.client('s3')
+    s3.download_file(bucket_name, s3_key, local_filename)
+    print(f"Downloaded {s3_key} from bucket {bucket_name} to {local_filename}")
 
 data = load_data()
+
+bucket_name = 'project-z-mambo'
+s3_key = 'symptoms/synthesis.db'
+local_filename = 'synthesis.db'
+
+download_s3_file(bucket_name, s3_key, local_filename)
 
 # Define a callback function to update the session state
 def proceed_to_mittelsuche():
