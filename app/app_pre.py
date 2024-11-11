@@ -36,9 +36,7 @@ def load_data():
 @st.cache_data
 def download_s3_file(bucket_name, s3_key, local_filename):
     s3 = boto3.client('s3')
-    st.write(f"Downloading {s3_key} from bucket {bucket_name} to {local_filename}")
     s3.download_file(bucket_name, s3_key, local_filename)
-    print(f"Downloaded {s3_key} from bucket {bucket_name} to {local_filename}")
 
 
 
@@ -46,7 +44,6 @@ bucket_name = 'project-z-mambo'
 s3_key = 'symptoms/synthesis.db'
 local_filename = 'synthesis.db'
 
-st.write(f"Downloading {s3_key} from bucket {bucket_name} to {local_filename}")
 download_s3_file(bucket_name, s3_key, local_filename)
 
 st.write("loading data")
@@ -80,6 +77,8 @@ def initialize_session():
         st.session_state.oberkategorie = ''  # New output variable
     if 'unterkategorie' not in st.session_state:
         st.session_state.unterkategorie = ''  # New output variable
+    if 'suchpfad' not in st.session_state:
+        st.session_state.suchpfad = ''
     if 'begründung' not in st.session_state:
         st.session_state.begründung = ''  # New output variable
     # Initialize top_results in session state if it doesn't exist
@@ -100,10 +99,11 @@ def process_symptom_class_state():
     user_input = st.session_state.get('user_input_symptom_class', '')
     try:
         with st.spinner('Verarbeite Symptomklasse...'):
-            oberkategorie, unterkategorie, begründung = process_symptom_class(user_input)
+            oberkategorie, unterkategorie, suchpfad, begründung = process_symptom_class(user_input)
             # Store the outputs in session state
             st.session_state.oberkategorie = oberkategorie
             st.session_state.unterkategorie = unterkategorie
+            st.session_state.suchpfad = suchpfad
             st.session_state.begründung = begründung
     except Exception as e:
         st.error(f"Fehler bei der Verarbeitung der Symptomklasse: {e}")
