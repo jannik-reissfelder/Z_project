@@ -1,7 +1,7 @@
 # openai_utils.py
 
 import openai
-from helpers import get_secret, initialize_openai  # Assuming get_secret is in helpers.py
+from helpers import initialize_openai  # Assuming get_secret is in helpers.py
 import json
 # Initialize OpenAI client
 client = initialize_openai()

@@ -46,7 +46,6 @@ local_filename = 'synthesis.db'
 
 download_s3_file(bucket_name, s3_key, local_filename)
 
-st.write("loading data")
 data = load_data()
 
 
