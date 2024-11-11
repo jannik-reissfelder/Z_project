@@ -9,3 +9,4 @@ awswrangler
 boto3
 tqdm
 streamlit-authenticator
+toml
