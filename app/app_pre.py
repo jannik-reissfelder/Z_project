@@ -40,7 +40,7 @@ def download_s3_file(bucket_name, s3_key, local_filename):
     s3.download_file(bucket_name, s3_key, local_filename)
     print(f"Downloaded {s3_key} from bucket {bucket_name} to {local_filename}")
 
-# data = load_data()
+
 
 bucket_name = 'project-z-mambo'
 s3_key = 'symptoms/synthesis.db'
@@ -48,6 +48,10 @@ local_filename = 'synthesis.db'
 
 st.write(f"Downloading {s3_key} from bucket {bucket_name} to {local_filename}")
 download_s3_file(bucket_name, s3_key, local_filename)
+
+st.write("loading data")
+data = load_data()
+
 
 # Define a callback function to update the session state
 def proceed_to_mittelsuche():
