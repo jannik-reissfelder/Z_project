@@ -10,28 +10,7 @@ import pandas as pd
 import numpy as np
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 import streamlit as st
-
-# Function to retrieve OpenAI API key from AWS Secrets Manager
-def get_secret():
-    secret_name = "openai/api-key/chat-app-keywords"
-    region_name = "eu-central-1"
-
-    # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(
-        service_name='secretsmanager',
-        region_name=region_name
-    )
-
-    try:
-        get_secret_value_response = client.get_secret_value(
-            SecretId=secret_name
-        )
-    except ClientError as e:
-        raise e
-
-    secret = get_secret_value_response['SecretString']
-    return json.loads(secret)["OPENAI_KEY"]
+import toml
 
 # Initialize OpenAI client
 def initialize_openai():
