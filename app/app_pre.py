@@ -42,11 +42,6 @@ bucket_name = 'project-z-mambo'
 s3_key = 'symptoms/synthesis.db'
 local_filename = 'synthesis.db'
 
-download_s3_file(bucket_name, s3_key, local_filename)
-
-data = load_data()
-
-
 # Define a callback function to update the session state
 def proceed_to_mittelsuche():
     """
@@ -85,6 +80,7 @@ def initialize_session():
 initialize_session()
 # st.write("After click Current session state:", st.session_state)
 
+download_s3_file(bucket_name, s3_key, local_filename)
 
 # Define the new processing function within app.py
 def process_symptom_class_state():
