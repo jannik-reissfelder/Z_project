@@ -139,3 +139,17 @@ def full_reset_session_state():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()
+
+
+def clear_session_state_vars(vars_to_clear):
+    """
+    Clears specified variables from Streamlit's session state and triggers garbage collection.
+
+    Parameters:
+    - vars_to_clear (list): List of session state keys to remove.
+    """
+    for var in vars_to_clear:
+        if var in st.session_state:
+            del st.session_state[var]
+    import gc
+    gc.collect()
