@@ -74,18 +74,37 @@ def display_symptom_class_results():
     # Add another separator
     st.markdown("---")
 
-    # Add the two options with buttons
-    col1, col2 = st.columns(2)
+    # Create columns for layout
+    col1, col2 = st.columns([1, 2])
 
     with col1:
-        if st.button("Der Suchpfad ist in Ordnung. Lass uns mit der Detail-Recherche fortfahren."):
+        # Option 1: Proceed to the 'search' step
+        if st.button("Analyse ist OK - Suchpfad finden."):
             st.session_state.current_step = 'search'
             st.rerun()
 
     with col2:
-        if st.button("Der Suchpfad und die Analyse gefallen dir nicht? Bitte erkläre mir, was du ändern möchtest."):
-            st.session_state.current_step = 'adjustment'
-            st.rerun()
+        # Option 2: Provide feedback for adjustment
+        st.write("Analyse gefällt dir nicht? Bitte gib deine Anpassungen ein.")
+        user_feedback = st.text_area("Anpassungen:", key='user_feedback')
+
+        # Button to submit feedback
+        if st.button("Anpassungen einreichen"):
+            if user_feedback:
+                # Append the user's feedback to the conversation
+                st.session_state.conversation.append({"role": "user", "content": user_feedback})
+                # Update the user input in session state
+                st.session_state.user_input_symptom_class = user_feedback
+                # Clear previous outputs if necessary
+                st.session_state.oberkategorie = ''
+                st.session_state.unterkategorie = ''
+                st.session_state.suchpfad = ''
+                st.session_state.begründung = ''
+                # Set the state back to processing
+                st.session_state.current_step = 'processing_symptom_class'
+                st.rerun()
+            else:
+                st.warning("Bitte gib deine Anpassungen ein oder klicke auf 'Weiter' um fortzufahren.")
 
 
 
