@@ -177,7 +177,23 @@ def display_remedies():
 
             # Initialize previous include value
             if include_prev_key not in st.session_state:
-                st.session_state[include_prev_key] = False
+                st.session_state[include_prev_key] = st.session_state[include_key]
+
+            #### New Logic: Handle inclusion state before creating the expander ####
+            # Check if include state has changed
+            include_changed = st.session_state[include_key] != st.session_state[include_prev_key]
+            if include_changed:
+                # Inclusion state has changed
+                if st.session_state[include_key]:
+                    # Checkbox is checked, add remedies
+                    add_to_final_results(remedies, symptom_id)
+                else:
+                    # Checkbox is unchecked, remove remedies
+                    remove_from_final_results(symptom_id)
+                # Update previous include value
+                st.session_state[include_prev_key] = st.session_state[include_key]
+                # Keep expander open when inclusion state changes
+                st.session_state[expanded_key] = True
 
             # Set the expanded parameter based on session state
             with st.expander(f"Symptom ID: {symptom_id} - {symptom_text}", expanded=st.session_state[expanded_key]):
@@ -195,23 +211,8 @@ def display_remedies():
                     # Checkbox to include/exclude remedies in final results
                     include = st.checkbox(
                         "Mittel zu den finalen Ergebnissen hinzufügen",
-                        key=include_key  # Use include_key without loop index
+                        key=include_key
                     )
-
-                    # Handle inclusion/exclusion
-                    if include != st.session_state[include_prev_key]:
-                        # Inclusion state has changed
-                        if include:
-                            # Checkbox is checked, add remedies
-                            add_to_final_results(remedies, symptom_id)
-                            st.session_state[expanded_key] = True
-                        else:
-                            # Checkbox is unchecked, remove remedies
-                            remove_from_final_results(symptom_id)
-                            st.session_state[expanded_key] = True
-
-                        # Update previous include value
-                        st.session_state[include_prev_key] = include
 
                 else:
                     st.write("Keine Mittel für dieses Symptom gefunden.")
@@ -229,6 +230,7 @@ def display_remedies():
             st.rerun()
     else:
         st.write("Keine Symptome ausgewählt.")
+
 
 
 
