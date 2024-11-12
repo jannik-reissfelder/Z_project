@@ -12,6 +12,7 @@ import pandas as pd
 from helpers import (
     initialize_openai,
     search_top_similar_symptoms,
+    clear_session_state_vars
 )
 
 # Initialize a session using Streamlit secrets
@@ -28,9 +29,8 @@ s3 = session.client('s3')
 client = initialize_openai()
 
 # Load data
-@st.cache_data
 def load_data():
-    symptom_data = wr.s3.read_parquet("s3://project-z-mambo/symptoms/relevant_symptoms.gz")
+    symptom_data = wr.s3.read_parquet("s3://project-z-mambo/symptoms/relevant_symptoms.gz")[['id', 'category', 'path', 'path_embeddings']]
     return symptom_data
 
 @st.cache_data
@@ -49,8 +49,14 @@ data = load_data()
 
 # Define a callback function to update the session state
 def proceed_to_mittelsuche():
+    """
+    Callback function to proceed to 'mittelsuche' step.
+    Cleans up 'top_results' and 'search_performed' from session state.
+    """
     st.session_state.current_step = 'mittelsuche'
+    clear_session_state_vars(['top_results', 'search_performed', 'keywords', 'filtered_results_grid'])
     st.rerun()
+
 
 # Initialize session state
 def initialize_session():
@@ -110,20 +116,35 @@ def perform_similarity_search():
     st.write("**Bestätigte Anfrage: Suche nach Treffer für Suchpfad**")
     st.write(st.session_state.suchpfad)
 
-    # Perform the search only if top_results is empty or newly initialized
-    if st.session_state.top_results.empty:
-        try:
-            with st.spinner('Ähnliche Symptome werden gesucht...'):
-                st.session_state.top_results = search_top_similar_symptoms(
-                    st.session_state.suchpfad, data, st.session_state.oberkategorie, st.session_state.unterkategorie ,top_n=100
-                )
-        except Exception as e:
-            st.error(f"Fehler bei der Suche nach ähnlichen Symptomen: {e}")
-            st.stop()
-
     # Initialize keywords in session state if it doesn't exist
     if 'keywords' not in st.session_state:
         st.session_state['keywords'] = []
+
+    # Check if the similarity search has already been performed
+    if not st.session_state.get('search_performed', False):
+        # Load data within the function to limit its scope and allow garbage collection
+        data = load_data()
+
+        # Perform the similarity search
+        try:
+            with st.spinner('Ähnliche Symptome werden gesucht...'):
+                top_results = search_top_similar_symptoms(
+                    st.session_state.suchpfad,
+                    data,
+                    st.session_state.oberkategorie,
+                    st.session_state.unterkategorie,
+                    top_n=100
+                )
+            # Store top_results in session_state for filtering and selection
+            st.session_state.top_results = top_results
+            # Set the flag indicating the search has been performed
+            st.session_state.search_performed = True
+        except Exception as e:
+            st.error(f"Fehler bei der Suche nach ähnlichen Symptomen: {e}")
+            st.stop()
+    else:
+        # Retrieve top_results from session_state
+        top_results = st.session_state.top_results
 
     st.markdown("**Fügen Sie Schlüsselwörter hinzu, um die Ergebnisse zu filtern:**")
     keywords = st_tags(
@@ -148,7 +169,7 @@ def perform_similarity_search():
                 filtered = filtered[filtered['path'].str.contains(kw, case=False, na=False)]
             return filtered
 
-    filtered_results = filter_top_results(st.session_state.top_results, st.session_state['keywords'])
+    filtered_results = filter_top_results(top_results, st.session_state['keywords'])
 
     if filtered_results.empty:
         st.write("Keine Treffer gefunden. Bitte passen Sie Ihre Schlüsselwörter an.")
@@ -180,6 +201,8 @@ def perform_similarity_search():
 
         # Retrieve selected rows
         selected = grid_response['selected_rows']
+
+        # Safely handle the selected rows without evaluating DataFrame in boolean context
         if selected is not None and len(selected) > 0:
             st.session_state.selected_rows = pd.DataFrame(selected)
         else:
@@ -195,6 +218,9 @@ def perform_similarity_search():
             st.button("Mittel finden", on_click=proceed_to_mittelsuche)
         else:
             st.write("Keine Symptome ausgewählt.")
+
+
+
 
 # Main controller function
 def run_app():
