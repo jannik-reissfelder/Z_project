@@ -14,7 +14,8 @@ import toml
 
 # Initialize OpenAI client
 def initialize_openai():
-    # os.environ["OPENAI_API_KEY"] = get_secret()
+    # secrets = toml.load("secrets.toml")
+    # os.environ["OPENAI_API_KEY"] = secrets.get("OPENAI_KEY")
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_KEY"]
     # Return the OpenAI client instance if necessary
     client = OpenAI()
@@ -22,8 +23,8 @@ def initialize_openai():
 
 # Retry logic for getting embeddings
 @retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(6))
-def get_embeddings(texts, model="text-embedding-3-small"):
-    response = openai.embeddings.create(input=texts, model=model)
+def get_embeddings(texts, model="text-embedding-3-large"):
+    response = openai.embeddings.create(input=texts, model=model,dimensions=256)
     return [item.embedding for item in response.data]
 
 # Function to search for top similar symptoms
@@ -36,7 +37,7 @@ def search_top_similar_symptoms(user_query, data, llm_oberkategorie, llm_unterka
     # after filtering get embeddings of user query
     user_embedding = get_embeddings([user_query])[0]
     # stack all embeddings of symptoms
-    embeddings_matrix = np.vstack(data['relevant_symptom_embeddings'].values)
+    embeddings_matrix = np.vstack(data['path_embeddings'].values)
     # calculate cosine similarities
     cosine_similarities = np.dot(embeddings_matrix, user_embedding)
     # get top n similar symptoms

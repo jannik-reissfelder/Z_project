@@ -130,7 +130,7 @@ def init_messages():
 
 
 # Placeholder for the new function
-def process_symptom_class(user_input):
+def process_symptom_class(user_input, conversation):
     """
     Processes the symptom class by making a call to OpenAI's model.
 
@@ -142,7 +142,7 @@ def process_symptom_class(user_input):
     """
 
     # init messages
-    messages = init_messages()
+    messages = conversation
     # init client
     client = initialize_openai()
 
@@ -243,21 +243,8 @@ def process_symptom_class(user_input):
         }
     )
     # Return the response
-    response_dict = response_content.choices[0].message.content
+    response_dict_raw = response_content.choices[0].message.content
     # load json
-    response_dict = json.loads(response_dict)
-    return  response_dict.get("Oberkategorie"), response_dict.get("Unterkategorie"), response_dict.get("Suchpfad"), response_dict.get("Begründung")
+    response_dict = json.loads(response_dict_raw)
+    return  response_dict.get("Oberkategorie"), response_dict.get("Unterkategorie"), response_dict.get("Suchpfad"), response_dict.get("Begründung"), response_dict_raw
 
-
-# Function to enrich query using LLM
-def enrich_query(conversation):
-    opai_client = initialize_openai()
-    response = opai_client.chat.completions.create(
-        model="gpt-4o",
-        messages=conversation,
-        max_tokens=200,
-        temperature=0.1
-    )
-
-    enriched_query = response.choices[0].message.content.strip()
-    return enriched_query

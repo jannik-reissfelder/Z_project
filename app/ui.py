@@ -14,12 +14,12 @@ def get_input_symptom_class():
         if user_input:
             st.session_state.current_step = 'processing_symptom_class'
             st.session_state.user_input_symptom_class = user_input
+            # the user input to st.session_state.conversation
+            st.session_state.conversation.append({"role": "user", "content": f"User Input: {st.session_state.user_input_symptom_class}"})
             st.rerun()
         else:
             st.warning("Bitte geben Sie die Symptomklasse des Patienten ein.")
 
-
-import streamlit as st
 
 
 def display_symptom_class_results():
@@ -38,6 +38,7 @@ def display_symptom_class_results():
     # Retrieve outputs from session state
     oberkategorie = st.session_state.get('oberkategorie', 'Nicht verfügbar')
     unterkategorie = st.session_state.get('unterkategorie', 'Nicht verfügbar')
+    suchpfad = st.session_state.get('suchpfad', 'Nicht verfügbar')
     begründung = st.session_state.get('begründung', 'Nicht verfügbar')
     user_input = st.session_state.get('user_input_symptom_class', 'Nicht verfügbar')
 
@@ -59,6 +60,13 @@ def display_symptom_class_results():
     # Add horizontal separator
     st.markdown("---")
 
+    # Display suchpfad in its own section with bold heading
+    st.markdown("**Suchpfad**")
+    st.write(suchpfad)
+
+    # Add another separator
+    st.markdown("---")
+
     # Display Begründung in its own section with bold heading
     st.markdown("**Begründung**")
     st.write(begründung)
@@ -66,10 +74,50 @@ def display_symptom_class_results():
     # Add another separator
     st.markdown("---")
 
-    # Button to proceed to the next step
-    if st.button("Weiter mit Symptom-Suche"):
-        st.session_state.current_step = 'enrich_query'
-        st.rerun()
+    # Add the two options with buttons
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Der Suchpfad ist in Ordnung. Lass uns mit der Detail-Recherche fortfahren."):
+            st.session_state.current_step = 'search'
+            st.rerun()
+
+    with col2:
+        if st.button("Der Suchpfad und die Analyse gefallen dir nicht? Bitte erkläre mir, was du ändern möchtest."):
+            st.session_state.current_step = 'adjustment'
+            st.rerun()
+
+
+
+
+def adjust_symptom_class():
+    st.title("Symptom Analyse Anpassung")
+    st.write("Der Suchpfad und die Analyse gefallen dir nicht? Bitte erkläre, was du ändern möchtest.")
+
+    user_input = st.text_area(
+        "Bitte beschreibe das Symptom des Patienten erneut oder gib weitere Details an:",
+        value=st.session_state.user_input_symptom_class
+    )
+
+    if st.button("Symptom erneut analysieren"):
+        if user_input:
+            # Update the user input in session state
+            st.session_state.user_input_symptom_class = user_input
+            # Append the new input to the conversation
+            st.session_state.conversation.append({"role": "user", "content": user_input})
+            # Clear previous outputs if necessary
+            st.session_state.oberkategorie = ''
+            st.session_state.unterkategorie = ''
+            st.session_state.suchpfad = ''
+            st.session_state.begründung = ''
+            # Set the state back to processing
+            st.session_state.current_step = 'processing_symptom_class'
+            st.rerun()
+        else:
+            st.warning("Bitte geben Sie die Symptomklasse des Patienten ein.")
+
+
+
 
 
 def display_remedies():
@@ -85,7 +133,7 @@ def display_remedies():
     if selected_rows is not None and not selected_rows.empty:
         for i, row in selected_rows.iterrows():
             symptom_id = row['id']
-            symptom_text = row['Relevantes Symptom']
+            symptom_text = row['path']
 
             # Unique keys for session state
             remedies_key = f'remedies_{symptom_id}'
@@ -205,8 +253,8 @@ def display_final_analysis():
             'total_degree': 'Summe Wertigkeit'
         }, inplace=True)
 
-        # Sort by total_occurrence descending
-        aggregated_df.sort_values(by='Summe Symptom', ascending=False, inplace=True)
+        # Sort by 'Summe Symptom' and then by 'Summe Wertigkeit' both in descending order
+        aggregated_df.sort_values(by=['Summe Symptom', 'Summe Wertigkeit'], ascending=[False, False], inplace=True)
 
         # Display the aggregated DataFrame
         st.write("**Gesammelte Mittel:**")
