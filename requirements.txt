@@ -4,6 +4,7 @@ openai
 pandas
 streamlit
 streamlit-aggrid
+streamlit_tags
 tenacity
 awswrangler
 boto3
