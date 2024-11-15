@@ -156,19 +156,16 @@ def clear_session_state_vars(vars_to_clear):
 
 
 import base64
-
+import os
 
 def display_logo(image_path, position_top=-40, position_right=5, width=100):
     """
     Displays a logo in the upper right corner of the Streamlit app.
-
-    Parameters:
-    - image_path (str): Path to the logo image file.
-    - position_top (int): Distance from the top of the page (default: -40).
-    - position_right (int): Distance from the right side of the page (default: 5).
-    - width (int): Width of the displayed image in pixels (default: 100).
     """
     try:
+        # Print the absolute path to check if it's correct
+        st.write("Logo absolute path:", os.path.abspath(image_path))
+
         # Load and encode the image in base64 format
         with open(image_path, "rb") as image_file:
             logo_base64 = base64.b64encode(image_file.read()).decode("utf-8")
@@ -193,3 +190,4 @@ def display_logo(image_path, position_top=-40, position_right=5, width=100):
         st.error("Logo file not found. Please check the file path.")
     except Exception as e:
         st.error(f"An error occurred while displaying the logo: {e}")
+
