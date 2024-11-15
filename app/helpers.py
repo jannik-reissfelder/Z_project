@@ -163,9 +163,6 @@ def display_logo(image_path, position_top=-40, position_right=5, width=100):
     Displays a logo in the upper right corner of the Streamlit app.
     """
     try:
-        # Print the absolute path to check if it's correct
-        st.write("Logo absolute path:", os.path.abspath(image_path))
-
         # Load and encode the image in base64 format
         with open(image_path, "rb") as image_file:
             logo_base64 = base64.b64encode(image_file.read()).decode("utf-8")

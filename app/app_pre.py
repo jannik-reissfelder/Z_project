@@ -84,29 +84,7 @@ initialize_session()
 download_s3_file(bucket_name, s3_key, local_filename)
 
 # display logo
-import os
-st.write("Current working directory:", os.getcwd())
 display_logo("./app/images/logo_cat.webp", position_top=-30, position_right=10, width=80)
-
-
-# Define the directory path
-directory_path = '/mount/src/z_project/app/images/'
-
-try:
-    # List all files and directories in the specified path
-    entries = os.listdir(directory_path)
-    if entries:
-        st.write(f"Contents of '{directory_path}':")
-        for entry in entries:
-            st.write(entry)
-    else:
-        st.write(f"The directory '{directory_path}' is empty.")
-except FileNotFoundError:
-    st.write(f"The directory '{directory_path}' does not exist.")
-except PermissionError:
-    st.write(f"Permission denied to access '{directory_path}'.")
-except Exception as e:
-    st.write(f"An error occurred: {e}")
 
 
 # Define the new processing function within app.py
