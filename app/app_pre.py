@@ -84,7 +84,7 @@ initialize_session()
 download_s3_file(bucket_name, s3_key, local_filename)
 
 # display logo
-display_logo("./logo_cat.webp", position_top=-30, position_right=10, width=80)
+display_logo("images/logo_cat.webp", position_top=-30, position_right=10, width=80)
 
 
 
