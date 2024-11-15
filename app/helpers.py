@@ -153,3 +153,43 @@ def clear_session_state_vars(vars_to_clear):
             del st.session_state[var]
     import gc
     gc.collect()
+
+
+import base64
+
+
+def display_logo(image_path, position_top=-40, position_right=5, width=100):
+    """
+    Displays a logo in the upper right corner of the Streamlit app.
+
+    Parameters:
+    - image_path (str): Path to the logo image file.
+    - position_top (int): Distance from the top of the page (default: -40).
+    - position_right (int): Distance from the right side of the page (default: 5).
+    - width (int): Width of the displayed image in pixels (default: 100).
+    """
+    try:
+        # Load and encode the image in base64 format
+        with open(image_path, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode("utf-8")
+
+        # Render the logo using Streamlit's markdown
+        st.markdown(
+            f"""
+            <style>
+            .logo-container {{
+                position: absolute;
+                top: {position_top}px;
+                right: {position_right}px;
+            }}
+            </style>
+            <div class="logo-container">
+                <img src="data:image/png;base64,{logo_base64}" width="{width}">
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    except FileNotFoundError:
+        st.error("Logo file not found. Please check the file path.")
+    except Exception as e:
+        st.error(f"An error occurred while displaying the logo: {e}")

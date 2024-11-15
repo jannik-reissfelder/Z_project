@@ -12,7 +12,8 @@ import pandas as pd
 from helpers import (
     initialize_openai,
     search_top_similar_symptoms,
-    clear_session_state_vars
+    clear_session_state_vars,
+    display_logo
 )
 
 # Initialize a session using Streamlit secrets
@@ -81,6 +82,13 @@ initialize_session()
 # st.write("After click Current session state:", st.session_state)
 
 download_s3_file(bucket_name, s3_key, local_filename)
+
+# display logo
+display_logo("logo_cat.webp", position_top=-30, position_right=10, width=80)
+
+
+
+
 
 # Define the new processing function within app.py
 def process_symptom_class_state():
