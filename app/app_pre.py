@@ -86,11 +86,11 @@ download_s3_file(bucket_name, s3_key, local_filename)
 # display logo
 import os
 st.write("Current working directory:", os.getcwd())
-display_logo("./images/logo_cat.webp", position_top=-30, position_right=10, width=80)
+display_logo("./app/images/logo_cat.webp", position_top=-30, position_right=10, width=80)
 
 
 # Define the directory path
-directory_path = '/mount/src/z_project/images/'
+directory_path = '/mount/src/z_project/app/images/'
 
 try:
     # List all files and directories in the specified path
